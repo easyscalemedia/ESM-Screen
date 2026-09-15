@@ -2,7 +2,7 @@
 
 The credential-free display half of the Easy Scale Media office wall. It is a
 plain static HTML/CSS/JavaScript site and remains live on GitHub Pages at
-`https://jeancamposlabs.github.io/ESM-Screen/` while a replacement host is
+`https://easyscalemedia.github.io/ESM-Screen/` while a replacement host is
 tested. Making this repository private would not improve display performance.
 The office address is deliberately not recorded here or on the page.
 

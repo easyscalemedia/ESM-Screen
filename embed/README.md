@@ -15,13 +15,13 @@ esm-backdrop/
 └── slides/              the images, 2560×1440 JPEG (only in the full pack, ~38 MB)
 ```
 
-Full pack (with images): **https://jeancamposlabs.github.io/ESM-Screen/embed/esm-backdrop-pack.zip**
-Live demo: **https://jeancamposlabs.github.io/ESM-Screen/embed/demo.html** (`?interval=0.2` to see it change fast)
+Full pack (with images): **https://easyscalemedia.github.io/ESM-Screen/embed/esm-backdrop-pack.zip**
+Live demo: **https://easyscalemedia.github.io/ESM-Screen/embed/demo.html** (`?interval=0.2` to see it change fast)
 
 ## 1. Easiest and safest: one iframe (nothing to copy, nothing to update)
 
 ```html
-<iframe src="https://jeancamposlabs.github.io/ESM-Screen/backdrop.html?follow=1"
+<iframe src="https://easyscalemedia.github.io/ESM-Screen/backdrop.html?follow=1"
         style="position:fixed;inset:0;width:100%;height:100%;border:0;z-index:0"
         sandbox="allow-scripts" loading="eager"></iframe>
 ```
@@ -48,8 +48,8 @@ site being down, self-host instead (§3).
 ## 2. Hot-link the two files from the ESM site
 
 ```html
-<link rel="stylesheet" href="https://jeancamposlabs.github.io/ESM-Screen/embed/esm-backdrop.css">
-<script src="https://jeancamposlabs.github.io/ESM-Screen/embed/esm-backdrop.js"></script>
+<link rel="stylesheet" href="https://easyscalemedia.github.io/ESM-Screen/embed/esm-backdrop.css">
+<script src="https://easyscalemedia.github.io/ESM-Screen/embed/esm-backdrop.js"></script>
 <script>
   ESMBackdrop.mount({ intervalMinutes: 3 });   // fixed full-screen layer, disc on, new image every 3 min
 </script>
@@ -100,7 +100,7 @@ meant for a TV; pass `discSize` (any CSS length) for a box.
 ```
 
 `follow: true` makes this screen read the ESM house config
-(`https://jeancamposlabs.github.io/ESM-Screen/config.json`, once a minute) and
+(`https://easyscalemedia.github.io/ESM-Screen/config.json`, once a minute) and
 mirror it: the rotation interval, the playlist, a pinned image, the palette and
 the movement setting.
 Both screens then compute the same slot from the clock and switch at the same
@@ -139,7 +139,7 @@ keeps your own palette; `followEveryMs` changes the polling (min 15 s).
 | option | default | what it does |
 |---|---|---|
 | `el` | *(creates a fixed full-screen layer)* | selector or element to fill |
-| `base` | `https://jeancamposlabs.github.io/ESM-Screen/` | root the manifest and image paths are resolved against |
+| `base` | `https://easyscalemedia.github.io/ESM-Screen/` | root the manifest and image paths are resolved against |
 | `manifest` | `assets/backgrounds.json` | image list (string or array of candidates, relative to `base` or absolute) |
 | `slides` | — | explicit array of image URLs; skips the manifest |
 | `intervalMinutes` | `3` | minutes per image (`0.5`, `3`, `60`, `1440`…) |
@@ -204,4 +204,4 @@ image is pre-decoded before the fade, and a TV that slept re-checks on wake.
 All images are cleared for commercial use, no attribution required: NASA imagery
 is public domain (Webb images: NASA/ESA/CSA/STScI, free with credit), the
 photographs are under the Unsplash License, the illustrated set was made
-in-house. Per-image credits: https://github.com/JeanCamposLabs/ESM-Screen/blob/main/assets/README.md
+in-house. Per-image credits: https://github.com/easyscalemedia/ESM-Screen/blob/main/assets/README.md

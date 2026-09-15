@@ -6,7 +6,7 @@
 #   sh fetch-slides.sh            # → ./slides/*.jpg + ./backgrounds.json
 #   sh fetch-slides.sh /some/dir  # → /some/dir/slides + /some/dir/backgrounds.json
 set -e
-BASE="https://jeancamposlabs.github.io/ESM-Screen/"
+BASE="https://easyscalemedia.github.io/ESM-Screen/"
 OUT="${1:-.}"
 mkdir -p "$OUT/slides"
 curl -fsSL "${BASE}assets/backgrounds.json?t=$(date +%s)" -o "$OUT/manifest.tmp.json"

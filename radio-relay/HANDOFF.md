@@ -44,7 +44,7 @@ Two **separate** GitHub repos are involved:
 
 | Repo | Role | Can the agent push? |
 |------|------|---------------------|
-| **JeanCamposLabs/ESM-Screen** — relay in `radio-relay/`, branch `main` | Source of truth | ✅ yes |
+| **easyscalemedia/ESM-Screen** — relay in `radio-relay/`, branch `main` | Source of truth | ✅ yes |
 | **JeanTechSupport/ESM-Screen** — relay files at repo **root**, branch `main` | What Render deploys | ❌ no (out of scope) — the **user** re-syncs |
 
 Because they're separate repos, **commit hashes differ** between them — don't be
@@ -54,12 +54,12 @@ confused by that.
 JeanTechSupport clone):
 ```bash
 rm -rf ~/esm-src
-git clone https://github.com/JeanCamposLabs/ESM-Screen.git ~/esm-src
+git clone https://github.com/easyscalemedia/ESM-Screen.git ~/esm-src
 cp -R ~/esm-src/radio-relay/. ~/esm-lofi-relay/
 cd ~/esm-lofi-relay && git add -A && git commit -m "sync relay" && git push origin main
 ```
 Pushing to JeanTechSupport auto-deploys on Render. (Pushing relay changes to
-JeanCamposLabs `main` is safe — `radio-relay/` is not published by GitHub Pages,
+easyscalemedia `main` is safe — `radio-relay/` is not published by GitHub Pages,
 so it never touches the live ESM-Screen site.)
 
 **Render service:** `esm-lofi-relay` · ID `srv-d8t8l9pkh4rs73bp0fdg` · runtime

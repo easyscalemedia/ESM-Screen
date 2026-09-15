@@ -128,8 +128,8 @@
     schedule: true, onTime: "07:00", offTime: "23:00", nightClock: true,
   };
 
-  const REPO = "JeanCamposLabs/ESM-Screen";
-  const SITE = "https://jeancamposlabs.github.io/ESM-Screen/";
+  const REPO = "easyscalemedia/ESM-Screen";
+  const SITE = "https://easyscalemedia.github.io/ESM-Screen/";
 
   /* ---------- Stations ---------- */
   // Candidate stream URLs for a station, tried in order with fallback. SomaFM

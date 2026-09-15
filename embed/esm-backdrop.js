@@ -20,7 +20,7 @@
   "use strict";
 
   var VERSION = "1.2.0";
-  var DEFAULT_BASE = "https://jeancamposlabs.github.io/ESM-Screen/";
+  var DEFAULT_BASE = "https://easyscalemedia.github.io/ESM-Screen/";
   // config.json → minutes (same table as the ESM screen's shared.js)
   var ROTATE_MINUTES = { off: 0, daily: 1440, "4h": 240, hourly: 60, "30m": 30, "15m": 15, "5m": 5, "3m": 3 };
   var PALETTES = { orange: 1, navy: 1, electric: 1, teal: 1, purple: 1 };
