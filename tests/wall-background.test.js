@@ -315,3 +315,31 @@ test("the published page names no office address and signposts nothing to the co
     assert.doesNotMatch(fs.readFileSync(path.join(root, f), "utf8"), /Boschcour|6221\s*JR/i, f + " names the office address");
   }
 });
+
+
+test("feed polls distinguish visible pages, hidden pages and unsupported visibility", async () => {
+  const oldDocument = global.document;
+  const calls = [];
+  const client = new wall.Client(async (url, options) => {
+    calls.push({url, options});
+    return response(JSON.stringify(projection()));
+  });
+  try {
+    global.document = { visibilityState: "visible" };
+    await client.refresh();
+    global.document.visibilityState = "hidden";
+    await client.refresh();
+    global.document.visibilityState = "unsupported";
+    await client.refresh();
+    assert.deepEqual(calls.map(c => c.url), [wall.FEED_URL + "?visibility=visible", wall.FEED_URL + "?visibility=hidden", wall.FEED_URL]);
+    for (const call of calls) {
+      const url = new URL(call.url);
+      assert.equal(url.origin + url.pathname, wall.FEED_URL);
+      assert.equal(call.options.credentials, "omit");
+      assert.equal(call.options.redirect, "error");
+    }
+  } finally {
+    if (oldDocument === undefined) delete global.document;
+    else global.document = oldDocument;
+  }
+});

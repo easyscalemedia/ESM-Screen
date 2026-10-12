@@ -211,7 +211,12 @@
     }
     async refresh(nowMs) {
       const headers = this.etag ? { "If-None-Match": this.etag } : {};
-      const response = await this.fetchImpl(FEED_URL, {
+      // Report actual Page Visibility on the existing, credential-free feed read.
+      // Unsupported browsers omit the signal rather than claiming visibility.
+      const visibility = global.document && global.document.visibilityState;
+      const feedUrl = visibility === "visible" || visibility === "hidden"
+        ? FEED_URL + "?visibility=" + visibility : FEED_URL;
+      const response = await this.fetchImpl(feedUrl, {
         credentials: "omit",
         cache: "no-cache",
         redirect: "error",              // the feed is this exact URL; a redirect elsewhere is a fault, not a source

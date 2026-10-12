@@ -20,6 +20,8 @@ The one allowed control read is fixed in `wall-background.js`:
 
 `<controller origin>/wall-background/display.json`
 
+Browsers supporting Page Visibility append `?visibility=visible` or `?visibility=hidden` to that same feed GET. Owners TV recovery counts only explicitly visible polls; a page reporting itself hidden cannot refresh that heartbeat. Browser visibility is not physical-panel proof. Unsupported browsers omit the signal and remain unknown.
+
 It is fetched with `credentials: "omit"`, bounded to 32 KiB, held only in
 memory, and normally revalidated with ETag/`If-None-Match`. The exact schema
 accepts only version 1, a positive integer revision, `selected-library` or
