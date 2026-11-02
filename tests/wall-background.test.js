@@ -313,6 +313,24 @@ test("content security policy names every host the page talks to, and nothing in
   assert.doesNotMatch(html, /<audio\b[^>]*crossorigin/);
 });
 
+test("backdrop.html runs under a strict CSP with no inline script or style", () => {
+  const root = path.join(__dirname, "..");
+  const html = fs.readFileSync(path.join(root, "backdrop.html"), "utf8");
+  const meta = html.match(/<meta http-equiv="Content-Security-Policy" content="([^"]+)"/);
+  assert.ok(meta, "CSP meta missing");
+  const csp = Object.fromEntries(meta[1].split(";").map((d) => d.trim()).filter(Boolean).map((d) => {
+    const [name, ...src] = d.split(/\s+/); return [name, src];
+  }));
+  assert.deepEqual(csp["default-src"], ["'none'"]);
+  assert.deepEqual(csp["script-src"], ["'self'"]);
+  assert.deepEqual(csp["connect-src"], ["'self'"]);
+  assert.deepEqual(csp["img-src"], ["'self'"]);
+  assert.doesNotMatch(meta[1], /unsafe-inline|unsafe-eval|\bhttp:/);
+  assert.doesNotMatch(html.replace(/<!--[\s\S]*?-->/g, ""), /<script(?![^>]*\bsrc=)|<style|\sstyle="/);
+  const wf = fs.readFileSync(path.join(root, ".github/workflows/deploy-pages.yml"), "utf8");
+  assert.match(wf, /cp [^\n]*backdrop\.html backdrop\.js backdrop\.css _site\//);
+});
+
 test("clock is on by default, and the retired Lofi Girl relay is gone", () => {
   require("../shared.js");
   assert.equal(globalThis.ESM.CONFIG_DEFAULTS.clock, true);
@@ -329,7 +347,7 @@ test("the published page names no office address and signposts nothing to the co
   const root = path.join(__dirname, "..");
   const host = new URL(wall.ORIGIN).host;
   // Everything the deploy workflow copies to the live site.
-  const published = ["index.html", "remote.html", "backdrop.html", "app.js", "shared.js",
+  const published = ["index.html", "remote.html", "backdrop.html", "backdrop.js", "backdrop.css", "app.js", "shared.js",
                      "wall-background.js", "styles.css", "assets/README.md", "embed/README.md",
                      "embed/esm-backdrop.js", "embed/demo.html"];
   for (const f of published) {
