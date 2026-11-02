@@ -110,14 +110,6 @@
     { id: "abstract", name: "Abstract",          blurb: "Liquid light, gold, waves — Unsplash licence" },
     { id: "art",      name: "Illustrated",       blurb: "Generated in-house (flat, stylised)" },
   ];
-  // Legacy local visual-state keys. They are not read from or written to a
-  // shared config file; Scale OS owns the narrow display-background feed.
-  const CONFIG_KEYS = [
-    "style", "palette", "bg", "bgRotate", "bgSet", "bgMotion",
-    "logo", "rocket", "clock", "particles", "weather", "speed",
-    "music", "musicStation", "musicVolume",
-    "schedule", "onTime", "offTime", "nightClock",
-  ];
   // Local visual defaults used only in memory.
   const CONFIG_DEFAULTS = {
     style: "premium", palette: "orange",
@@ -126,9 +118,6 @@
     music: false, musicStation: "lautlofi", musicVolume: 0.35,
     schedule: true, onTime: "07:00", offTime: "23:00", nightClock: true,
   };
-
-  const REPO = "easyscalemedia/ESM-Screen";
-  const SITE = "https://easyscalemedia.github.io/ESM-Screen/";
 
   /* ---------- Stations ---------- */
   // Candidate stream URLs for a station, tried in order with fallback. SomaFM
@@ -177,23 +166,6 @@
     set.forEach((t) => { want[slideToken(t)] = true; });
     const out = all.filter((s) => { const i = slideInfo(s); return want[i.token] || want[i.cat]; });
     return out.length ? out : all.slice();
-  }
-  // The shortest bgSet for a list of ticked tokens: whole categories collapse to
-  // their id, everything ticked collapses to [] (= no restriction, so a new
-  // file dropped into assets/slides joins the rotation by itself).
-  function compactPlaylist(all, tokens) {
-    const inc = {};
-    tokens.forEach((t) => { inc[slideToken(t)] = true; });
-    const out = []; let total = 0;
-    CATEGORIES.forEach((cat) => {
-      const items = all.map(slideInfo).filter((i) => i.cat === cat.id);
-      if (!items.length) return;
-      const on = items.filter((i) => inc[i.token]);
-      total += on.length;
-      if (on.length === items.length) out.push(cat.id);
-      else on.forEach((i) => out.push(i.token));
-    });
-    return total >= all.length ? [] : out;
   }
   function findSlide(all, nameOrToken) {
     if (!nameOrToken) return -1;
@@ -277,40 +249,11 @@
   }
   const motionStill = () => "scale(" + MOTION_BASE_SCALE.toFixed(3) + ")";
 
-  /* ---------- Config ---------- */
-  // Accept older configs: `dailyBg: true/false` becomes `bgRotate`.
-  function normalizeConfig(cfg) {
-    const c = Object.assign({}, cfg || {});
-    if (c.bgRotate == null && c.dailyBg != null) c.bgRotate = c.dailyBg ? "daily" : "off";
-    if (c.bgRotate != null && !ROTATIONS.some((r) => r.id === c.bgRotate)) delete c.bgRotate;
-    delete c.dailyBg;
-    if (c.bgSet != null && !Array.isArray(c.bgSet)) delete c.bgSet;
-    if (Array.isArray(c.bgSet)) c.bgSet = c.bgSet.map(slideToken).filter(Boolean);
-    if (c.bg != null) c.bg = slideToken(c.bg);
-    delete c.musicOutput;
-    if (c.bgMotion != null && !MOTIONS.some((m) => m.id === c.bgMotion)) delete c.bgMotion;
-    return c;
-  }
-  // Stable local preview projection; there is no network write path.
-  function pickConfig(state) {
-    const out = {};
-    CONFIG_KEYS.forEach((k) => {
-      if (state[k] === undefined) return;
-      out[k] = k === "bg" ? slideToken(state[k]) : state[k];
-    });
-    if (Array.isArray(out.bgSet) && !out.bgSet.length) delete out.bgSet;
-    return out;
-  }
-  function sameConfig(a, b) {
-    return JSON.stringify(pickConfig(normalizeConfig(a))) === JSON.stringify(pickConfig(normalizeConfig(b)));
-  }
-
   global.ESM = {
-    STYLES, PALETTES, STATIONS, ROTATIONS, CATEGORIES, MOTIONS, CONFIG_KEYS, CONFIG_DEFAULTS, REPO, SITE,
+    STYLES, PALETTES, STATIONS, ROTATIONS, CATEGORIES, MOTIONS, CONFIG_DEFAULTS,
     stationUrls, findStation,
-    slideToken, slideInfo, thumbFor, effectiveSlides, compactPlaylist, findSlide,
+    slideToken, slideInfo, thumbFor, effectiveSlides, findSlide,
     rotationMinutes, localMinutes, seededOrder, rotationPick,
     motionFor, motionScale, motionFrames, motionStill, MOTION_BASE_SCALE,
-    normalizeConfig, pickConfig, sameConfig,
   };
 })(typeof window !== "undefined" ? window : globalThis);

@@ -313,6 +313,14 @@ test("content security policy names every host the page talks to, and nothing in
   assert.doesNotMatch(html, /<audio\b[^>]*crossorigin/);
 });
 
+test("the retired remote's preview channel and config export are gone", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+  assert.doesNotMatch(app, /addEventListener\("message"|postMessage|forceNight|configForExport/);
+  require("../shared.js");
+  for (const k of ["pickConfig", "sameConfig", "normalizeConfig", "compactPlaylist", "REPO", "SITE", "CONFIG_KEYS"])
+    assert.equal(globalThis.ESM[k], undefined, k);
+});
+
 test("the particle loop stops at night and with particles off", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
   assert.match(app, /function frame\(t\) \{\s*if \(!particlesWanted\(\)\) \{ rafId = null;[^}]*return; \}/);

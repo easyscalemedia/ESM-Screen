@@ -126,11 +126,8 @@
   /* ---------- Schedule (auto on/off) ---------- */
   function toMin(hhmm) { const [h, m] = String(hhmm || "0:0").split(":").map(Number); return h * 60 + m; }
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
-  let forceNight = null;              // preview only: the remote can show the night screen
   function applySchedule() {
-    if (forceNight != null) {
-      screen.classList.toggle("is-night", forceNight);
-    } else if (!state.schedule) {
+    if (!state.schedule) {
       screen.classList.remove("is-night");
     } else {
       const activeFeed = wallClient.current(Date.now());
@@ -532,7 +529,7 @@
       try { if (el._esmAnim) paused ? el._esmAnim.pause() : el._esmAnim.play(); } catch {}
     });
   }
-  // Re-apply the current setting to the layer on screen (used by the panel/remote).
+  // Re-apply the current setting to the layer on screen (used by the panel).
   function refreshMotion() {
     if (!slidesActive || !slides.length) return;
     panLayer(slideLayers[slideFront], slides[slideIdx]);
@@ -696,8 +693,7 @@
     slideLayers[1].classList.remove("is-on");
     panLayer(first, slides[slideIdx]);
     buildBgGrid();
-    if (PREVIEW) notifyParent();
-    else refreshWallFeed();
+    if (!PREVIEW) refreshWallFeed();
   }
 
   // Scale OS deselected the library (or its feed is gone for good): bundled slides.
@@ -773,8 +769,6 @@
       }
     } catch {}
   }
-
-  function configForExport() { return ESM.pickConfig(state); }
 
   /* ---------- Music ----------
      The stream is a live third-party Icecast stream, so it *will* drop now
@@ -985,32 +979,6 @@
     screen.classList.add("wave-go");
     clearTimeout(waveTimer);
     waveTimer = setTimeout(() => screen.classList.remove("wave-go"), 5400);
-  }
-
-  /* ---------- Live preview (inside remote.html) ----------
-     The remote posts messages; this page mirrors them without saving or
-     polling, so the operator sees exactly what the TVs will show. */
-  function notifyParent() {
-    if (!PREVIEW || window.parent === window) return;
-    try {
-      window.parent.postMessage({
-        type: "esm:state",
-        slides: slides.slice(),
-        current: slides[slideIdx] || null,
-        config: configForExport(),
-      }, location.origin);   // never to a foreign parent
-    } catch {}
-  }
-  if (PREVIEW) {
-    addEventListener("message", (e) => {
-      if (e.origin !== location.origin) return;   // only this site may drive the preview
-      const d = e.data || {};
-      if (d.type === "esm:bg" && d.bg && !wallFeed) { const i = ESM.findSlide(slides, d.bg); if (i >= 0) showSlide(i); notifyParent(); }
-      else if (d.type === "esm:wave") playWave();
-      else if (d.type === "esm:motion") { state.bgMotion = d.motion; refreshMotion(); }
-      else if (d.type === "esm:night") { forceNight = d.on ? true : null; applySchedule(); }
-      else if (d.type === "esm:panel") { d.open ? openPanel() : closePanel(); }
-    });
   }
 
   /* ---------- Boot ---------- */

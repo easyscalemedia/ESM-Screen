@@ -56,7 +56,8 @@ Defence in depth added by the audit:
   list in `shared.js` and the CSP in agreement.
 - `<meta name="referrer" content="no-referrer">`; the feed fetch also refuses
   redirects.
-- The `?preview` message channel accepts and posts to `location.origin` only.
+- The page accepts no `postMessage` input at all: the old remote-preview channel
+  was removed with the remote. `?preview` is a local development mode only.
 - All dynamic HTML is built from static catalogue strings or DOM nodes; the
   weather forecast no longer goes through `innerHTML`.
 - The audio element no longer requests CORS mode, so a station that omits

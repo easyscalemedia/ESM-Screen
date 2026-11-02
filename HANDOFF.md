@@ -51,7 +51,7 @@ feed URL and its image route (`redirect: "error"`, no referrer), validated into
 a strict 32 KiB envelope; there is no write path and nothing to steal. Added: a
 CSP `<meta>` (`default-src 'none'`, `script-src 'self'`, per-host allowlists for
 connect/img/media, contract-tested against the station list), no-referrer,
-same-origin-only preview messaging, DOM-built weather forecast, audio without
+no postMessage input (the remote-preview channel is gone), DOM-built weather forecast, audio without
 CORS mode. (The relay with its `/diag` probe has since been deleted.) The clock
 is on by default again (`CONFIG_DEFAULTS.clock`). Residual: Google Fonts CSS,
 Actions pinned to tags not SHAs.
