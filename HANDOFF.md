@@ -53,8 +53,8 @@ CSP `<meta>` (`default-src 'none'`, `script-src 'self'`, per-host allowlists for
 connect/img/media, contract-tested against the station list), no-referrer,
 no postMessage input (the remote-preview channel is gone), DOM-built weather forecast, audio without
 CORS mode. (The relay with its `/diag` probe has since been deleted.) The clock
-is on by default again (`CONFIG_DEFAULTS.clock`). Residual: Google Fonts CSS,
-Actions pinned to tags not SHAs.
+is on by default again (`CONFIG_DEFAULTS.clock`). Residual: Google Fonts CSS.
+Actions are pinned to commit SHAs and the deploy's pip packages to exact versions.
 
 ## Preserved motion work
 

@@ -67,8 +67,8 @@ Defence in depth added by the audit:
   `/diag` probe) was retired and deleted in November 2026.
 
 Residual, accepted: Google Fonts CSS is a third-party stylesheet (style-only,
-cannot execute script under the CSP); GitHub Actions are pinned to major tags,
-not commit SHAs. The audio streams are third-party hosts named in the CSP.
+cannot execute script under the CSP); GitHub Actions are pinned to full commit SHAs
+and the deploy's Pillow/numpy to exact versions (wheels only); bump them deliberately. The audio streams are third-party hosts named in the CSP.
 
 ## Display behavior
 

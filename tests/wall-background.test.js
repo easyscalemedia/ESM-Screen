@@ -313,6 +313,18 @@ test("content security policy names every host the page talks to, and nothing in
   assert.doesNotMatch(html, /<audio\b[^>]*crossorigin/);
 });
 
+test("workflows pin every action to a commit SHA and every pip package to a version", () => {
+  const dir = path.join(__dirname, "..", ".github/workflows");
+  for (const f of fs.readdirSync(dir)) {
+    const wf = fs.readFileSync(path.join(dir, f), "utf8");
+    for (const m of wf.matchAll(/uses:\s*(\S+)/g)) assert.match(m[1], /@[0-9a-f]{40}$/, f + ": " + m[1]);
+    for (const m of wf.matchAll(/pip install ([^|\n]*)/g)) {
+      assert.match(m[1], /--only-binary=:all:/, f);
+      for (const pkg of m[1].split(/\s+/).filter((t) => t && !t.startsWith("-"))) assert.match(pkg, /==\d/, f + ": " + pkg);
+    }
+  }
+});
+
 test("the retired remote's preview channel and config export are gone", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
   assert.doesNotMatch(app, /addEventListener\("message"|postMessage|forceNight|configForExport/);
