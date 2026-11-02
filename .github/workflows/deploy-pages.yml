@@ -28,7 +28,9 @@ jobs:
       - name: Image tooling (thumbnails + per-image motion)
         # Exact versions, wheels only: no unpinned upgrade and no sdist build
         # script runs in the job that holds the Pages deploy token.
-        run: python3 -m pip install --quiet --only-binary=:all: pillow==13.0.0 numpy==2.5.4 || echo "Pillow/numpy unavailable — thumbnails and motion for new slides will be skipped"
+        run: |
+          python3 -m pip install --quiet --only-binary=:all: pillow==13.0.0 numpy==2.5.4 \
+            || echo "Pillow/numpy unavailable — thumbnails and motion for new slides will be skipped"
 
       - name: Assemble site (+ stamp version for auto-refresh)
         run: |
