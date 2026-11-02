@@ -313,6 +313,14 @@ test("content security policy names every host the page talks to, and nothing in
   assert.doesNotMatch(html, /<audio\b[^>]*crossorigin/);
 });
 
+test("the particle loop stops at night and with particles off", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+  assert.match(app, /function frame\(t\) \{\s*if \(!particlesWanted\(\)\) \{ rafId = null;[^}]*return; \}/);
+  assert.match(app, /cancelAnimationFrame\(rafId\)/);
+  const schedule = app.slice(app.indexOf("function applySchedule"), app.indexOf("/* ---------- Ambient particle canvas"));
+  assert.match(schedule, /syncParticles\(\)/);
+});
+
 test("backdrop.html runs under a strict CSP with no inline script or style", () => {
   const root = path.join(__dirname, "..");
   const html = fs.readFileSync(path.join(root, "backdrop.html"), "utf8");

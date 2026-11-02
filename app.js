@@ -138,6 +138,7 @@
       screen.classList.toggle("is-night", !ESMWallBackground.isDaytime(Date.now(), activeSchedule));
     }
     setMotionPaused(screen.classList.contains("is-night"));
+    syncParticles();
     syncMusic();   // go quiet at night, resume in the day
   }
 
@@ -176,13 +177,23 @@
       tw: Math.random() * Math.PI * 2,
     }));
   }
+  // The loop only runs while motes are wanted and the screen is awake: at night
+  // (7 h+ a day) or with particles off it stops entirely instead of waking 60
+  // times a second to clear an empty canvas. applySchedule() restarts it.
+  const particlesWanted = () => state.particles && !screen.classList.contains("is-night");
+  function syncParticles() {
+    if (particlesWanted()) {
+      if (rafId == null) { lastT = 0; rafId = requestAnimationFrame(frame); }
+    } else {
+      if (rafId != null) { cancelAnimationFrame(rafId); rafId = null; }
+      ctx.clearRect(0, 0, innerWidth, innerHeight);
+    }
+  }
   function frame(t) {
+    if (!particlesWanted()) { rafId = null; ctx.clearRect(0, 0, innerWidth, innerHeight); return; }
     rafId = requestAnimationFrame(frame);
     if (t - lastT < 66) return;            // ~15fps cap: each frame re-uploads the canvas texture
     const dt = Math.min((t - lastT) / 16.67, 2); lastT = t;
-    if (!state.particles || screen.classList.contains("is-night")) {
-      ctx.clearRect(0, 0, innerWidth, innerHeight); return;
-    }
     ctx.clearRect(0, 0, innerWidth, innerHeight);
     const col = accentCache;
     const spd = state.speed;
@@ -1023,7 +1034,7 @@
   setInterval(applySchedule, 20000);
   sizeCanvas();
   addEventListener("resize", debounce(sizeCanvas, 250));
-  rafId = requestAnimationFrame(frame);
+  syncParticles();
   maybeHint();
   requestWakeLock();
   flyRocket();
