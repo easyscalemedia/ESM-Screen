@@ -147,6 +147,39 @@ test("client rejects oversized bodies and malformed JSON", async () => {
   await assert.rejects(multibyte.refresh(), /too large/);
 });
 
+test("client holds the last good feed through failures, then lets it go stale", async () => {
+  const t0 = Date.parse("2026-09-03T10:04:00Z");   // after activatedAt
+  const replies = [
+    () => response(JSON.stringify(projection()), { headers: { etag: '"one"' } }),
+    () => { throw new TypeError("Failed to fetch"); },
+    () => response("", { status: 503, ok: false }),
+    () => response("", { status: 304, ok: false }),
+    () => { throw new TypeError("Failed to fetch"); },
+  ];
+  const client = new wall.Client(async () => replies.shift()());
+  assert.equal(client.held(t0), null, "nothing held before a first good answer");
+  assert.equal((await client.refresh(t0)).revision, 3);
+  await assert.rejects(client.refresh(t0 + 30000), /Failed to fetch/);
+  assert.equal(client.held(t0 + 30000).revision, 3, "one failed poll keeps the feed");
+  await assert.rejects(client.refresh(t0 + 60000), /503/);
+  assert.equal(client.held(t0 + wall.STALE_MS).revision, 3, "held up to STALE_MS");
+  assert.equal(client.held(t0 + wall.STALE_MS + 1), null, "then it goes stale");
+  // a 304 counts as a fresh good answer
+  assert.equal((await client.refresh(t0 + wall.STALE_MS - 1000)).revision, 3);
+  await assert.rejects(client.refresh(t0 + wall.STALE_MS + 1000));
+  assert.ok(client.held(t0 + wall.STALE_MS + 1000), "the 304 restarted the clock");
+  client.clear();
+  assert.equal(client.held(t0), null);
+});
+
+test("app keeps the feed on transient errors and image failures instead of dropping it", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+  const refresh = app.slice(app.indexOf("async function refreshWallFeed"), app.indexOf("/* ---------- Weather"));
+  assert.match(refresh, /catch \(_\) \{[^}]*if \(!wallClient\.held\(Date\.now\(\)\)\) useBundledFallback\(\)/);
+  assert.match(app, /probe\.onerror = \(\) => \{ if \(wallFeed && displayedSrc === src\) holdFeedImages\(\); \}/);
+  assert.doesNotMatch(app, /probe\.onerror = [^\n]*useBundledFallback/);
+});
+
 test("Dutch public holidays are exact for 2026 and 2027", () => {
   assert.deepEqual(wall.dutchPublicHolidays(2026), [
     "2026-01-01", "2026-04-03", "2026-04-05", "2026-04-06", "2026-04-27",

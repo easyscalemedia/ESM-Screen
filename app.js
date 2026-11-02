@@ -480,6 +480,10 @@
   let lastSlot = null, bgPinned = false, rotTimer = null, motionMap = null;
   let wallFeed = null;
   const wallClient = new ESMWallBackground.Client();
+  // A feed image that fails to load (a sleeping Render host, a blip) sets this:
+  // until then the bundled slides stand in, while the feed itself is kept.
+  const IMAGE_RETRY_MS = 60000;
+  let feedHoldUntil = 0;
 
   const activeSlides = () => ESM.effectiveSlides(slides, state.bgSet);
 
@@ -535,9 +539,11 @@
     const el = slideLayers[slideFront ^ 1];            // the hidden layer
     clearTimeout(el._esmRetire);
     el.style.backgroundImage = `url("${slides[i]}")`;
-    const probe = new Image();
-    probe.onerror = () => { if (wallFeed) useBundledFallback(); };
-    probe.src = slides[i];
+    if (wallFeed) {                                     // a feed image: notice if it cannot load
+      const src = slides[i], probe = new Image();
+      probe.onerror = () => { if (wallFeed && displayedSrc === src) holdFeedImages(); };
+      probe.src = src;
+    }
     el.classList.add("is-on");                          // reveal first — never blocked by the pan
     slideLayers[slideFront].classList.remove("is-on");
     retireLayer(slideLayers[slideFront]);
@@ -552,11 +558,12 @@
   // Rotation: called every 30 s, on wake, and whenever the config changes.
   function rotationTick(force) {
     if (!slidesActive || bgPinned) return;
-    const activeFeed = wallClient.current(Date.now());
-    if (activeFeed && activeFeed !== wallFeed) {
+    const now = Date.now();
+    const activeFeed = now >= feedHoldUntil ? wallClient.current(now) : null;
+    if (activeFeed !== wallFeed) {                      // feed adopted, replaced, or set aside
       wallFeed = activeFeed;
-      bgPinned = false;
       lastSlot = null;
+      if (!wallFeed) slides = bundledSlides.length ? bundledSlides.slice() : FALLBACK_SLIDES.slice();
     }
     if (wallFeed) {
       const remotePick = ESMWallBackground.pick(wallFeed, Date.now());
@@ -579,8 +586,11 @@
     } : null;
     clearTimeout(rotTimer);
     if (!pick) return;                                  // pinned: nothing to do
-    // wake right on the next boundary, so every screen (and any paired one) switches at the same second
-    rotTimer = setTimeout(() => rotationTick(), Math.max(1000, pick.nextChangeMs + 250));
+    // wake right on the next boundary, so every screen (and any paired one) switches at the same second;
+    // sooner if a held-back feed is due to be tried again
+    let wait = pick.nextChangeMs + 250;
+    if (feedHoldUntil > now && wallClient.current(now)) wait = Math.min(wait, feedHoldUntil - now + 50);
+    rotTimer = setTimeout(() => rotationTick(), Math.max(1000, wait));
     if (!force && pick.slot === lastSlot) return;
     lastSlot = pick.slot;
     showSlideSrc(list[pick.index]);
@@ -679,24 +689,34 @@
     else refreshWallFeed();
   }
 
+  // Scale OS deselected the library (or its feed is gone for good): bundled slides.
   function useBundledFallback() {
     wallClient.clear();
-    wallFeed = null;
+    wallFeed = null; feedHoldUntil = 0;
     slides = bundledSlides.length ? bundledSlides.slice() : FALLBACK_SLIDES.slice();
     state.bgRotate = "5m";   // mirrors ESMWallBackground.BUNDLED_SLOT_MS for the panel's "next change" text
     bgPinned = false; lastSlot = null;
     rotationTick(true);
   }
+  // A feed image failed: show bundled slides for a minute, keep the feed, retry.
+  function holdFeedImages() {
+    feedHoldUntil = Date.now() + IMAGE_RETRY_MS;
+    rotationTick(true);
+  }
   async function refreshWallFeed() {
     if (PREVIEW || !slidesActive) return;
-    try {
-      const feed = await wallClient.refresh();
-      if (!feed) return;
-      if (feed.source !== "selected-library") { useBundledFallback(); return; }
-      if (feed !== wallFeed) lastSlot = null;
-      wallFeed = feed; bgPinned = false;
-      rotationTick(true);
-    } catch (_) { useBundledFallback(); }
+    let feed;
+    try { feed = await wallClient.refresh(); }
+    catch (_) {
+      // Unreachable, slow to wake, or a bad answer: keep the last good feed for
+      // up to ESMWallBackground.STALE_MS; only then fall back.
+      if (!wallClient.held(Date.now())) useBundledFallback();
+      return;
+    }
+    if (!feed) return;
+    if (feed.source !== "selected-library") { useBundledFallback(); return; }
+    bgPinned = false;
+    rotationTick(true);
   }
 
   /* ---------- Weather: Maastricht via Open-Meteo (free, no key) ---------- */

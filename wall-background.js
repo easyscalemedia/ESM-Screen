@@ -9,6 +9,12 @@
   const MAX_HOLIDAYS = 512;
   const SLOT_MS = 180000;           // the Scale OS feed's slot: part of its validated contract
   const BUNDLED_SLOT_MS = 300000;   // the bundled fallback's own pace: 5 min, so ~190 slides fill a 16 h day
+  // How long the last good feed keeps driving the screens while the feed host
+  // is unreachable. The feed lives on a free Render plan that sleeps and wakes
+  // slowly; one failed poll must not throw the selected library away. Slides are
+  // picked from the clock, so a held feed keeps every screen in step. A real
+  // deselection arrives as a *successful* "bundled-fallback" response.
+  const STALE_MS = 60 * 60000;
   const FIELDS = ["activatedAt", "browserAudio", "images", "output", "revision", "revisionOffset", "schedule", "slotMs", "source", "v"];
   const IMAGE_FIELDS = ["id", "version"];
   const SCHEDULE_FIELDS = ["off", "on", "timezone"];
@@ -195,6 +201,7 @@
       this.etag = null;
       this.feed = null;
       this.pending = null;
+      this.lastOkAt = 0;
     }
     current(nowMs) {
       const now = nowMs == null ? Date.now() : Number(nowMs);
@@ -208,6 +215,14 @@
       this.etag = null;
       this.feed = null;
       this.pending = null;
+      this.lastOkAt = 0;
+    }
+    // The feed to keep using after a failed refresh: the last good one while it
+    // is younger than STALE_MS, otherwise null (time to fall back).
+    held(nowMs) {
+      const now = nowMs == null ? Date.now() : Number(nowMs);
+      if (!Number.isFinite(now) || !this.lastOkAt || now - this.lastOkAt > STALE_MS) return null;
+      return this.current(now);
     }
     async refresh(nowMs) {
       const headers = this.etag ? { "If-None-Match": this.etag } : {};
@@ -223,7 +238,10 @@
         referrerPolicy: "no-referrer",
         headers
       });
-      if (response.status === 304) return this.current(nowMs);
+      if (response.status === 304) {
+        if (this.feed || this.pending) this.lastOkAt = nowMs == null ? Date.now() : Number(nowMs);
+        return this.current(nowMs);
+      }
       if (!response.ok) throw new Error("display feed " + response.status);
       const length = Number(response.headers.get("content-length"));
       if (Number.isFinite(length) && length > MAX_BYTES) throw new Error("display feed too large");
@@ -235,13 +253,14 @@
       if (!valid) throw new Error("invalid display schema");
       this.etag = response.headers.get("etag") || null;
       const now = nowMs == null ? Date.now() : Number(nowMs);
+      this.lastOkAt = now;
       if (Number.isFinite(now) && now < instant(valid.activatedAt)) this.pending = valid;
       else { this.feed = valid; this.pending = null; }
       return this.current(now);
     }
   }
 
-  const api = { ORIGIN, FEED_URL, IMAGE_PATH, MAX_BYTES, MAX_HOLIDAYS, SLOT_MS, BUNDLED_SLOT_MS, validate, validateSchedule,
+  const api = { ORIGIN, FEED_URL, IMAGE_PATH, MAX_BYTES, MAX_HOLIDAYS, SLOT_MS, BUNDLED_SLOT_MS, STALE_MS, validate, validateSchedule,
     imageUrl, pick, bundledPick,
     amsterdamParts, easterSunday, dutchPublicHolidays, isDutchPublicHoliday, isOfficeActive, isDaytime, Client };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
