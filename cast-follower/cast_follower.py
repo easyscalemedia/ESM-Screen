@@ -14,9 +14,9 @@ ON_HOUR = 7
 OFF_HOUR = 23
 VOLUME = 0.45
 STATIONS = {
-    "lofigirl": (
-        "Lofi Girl",
-        ("https://esm-lofi-relay.onrender.com/lofi.mp3",),
+    "lautlofi": (
+        "laut.fm Lofi",
+        ("https://lofi.stream.laut.fm/lofi", "https://stream.laut.fm/lofi"),
     ),
 }
 OUR_APP = "Default Media Receiver"
@@ -28,7 +28,7 @@ def desired(now=None):
     current = (now or dt.datetime.now(tz=TIME_ZONE)).astimezone(TIME_ZONE)
     return {
         "play": ON_HOUR <= current.hour < OFF_HOUR,
-        "station": "lofigirl",
+        "station": "lautlofi",
         "volume": VOLUME,
     }
 

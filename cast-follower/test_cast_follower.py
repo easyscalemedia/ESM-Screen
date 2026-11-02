@@ -50,25 +50,25 @@ class CastFollowerTest(unittest.TestCase):
 
     def test_allowlist_has_no_configurable_url(self):
         self.assertEqual(cast_follower.station_urls("unknown"), ())
-        self.assertTrue(all(url.startswith("https://") for url in cast_follower.station_urls("lofigirl")))
+        self.assertTrue(all(url.startswith("https://") for url in cast_follower.station_urls("lautlofi")))
 
     def test_foreign_playback_is_never_stopped_or_replaced(self):
         cast = FakeCast("PLAYING", "Spotify")
         follower = cast_follower.Follower(cast)
-        self.assertEqual(follower.reconcile({"play": True, "station": "lofigirl", "volume": 0.45}), "foreign")
+        self.assertEqual(follower.reconcile({"play": True, "station": "lautlofi", "volume": 0.45}), "foreign")
         self.assertEqual(cast.media_controller.played, [])
         self.assertEqual(cast.media_controller.stops, 0)
 
     def test_unowned_default_receiver_is_also_left_alone(self):
         cast = FakeCast("PLAYING", cast_follower.OUR_APP)
         follower = cast_follower.Follower(cast)
-        self.assertEqual(follower.reconcile({"play": False, "station": "lofigirl", "volume": 0.45}), "foreign")
+        self.assertEqual(follower.reconcile({"play": False, "station": "lautlofi", "volume": 0.45}), "foreign")
         self.assertEqual(cast.media_controller.stops, 0)
 
     def test_starts_and_stops_only_owned_playback(self):
         cast = FakeCast()
         follower = cast_follower.Follower(cast)
-        play = {"play": True, "station": "lofigirl", "volume": 0.45}
+        play = {"play": True, "station": "lautlofi", "volume": 0.45}
         self.assertEqual(follower.reconcile(play), "playing")
         self.assertEqual(cast.volumes, [0.45])
         self.assertEqual(len(cast.media_controller.played), 1)

@@ -20,7 +20,7 @@
     tag: "Scaling brands to the moon.",
     musicBar: true,          // show the small on-screen music control (this device only)
   };
-  let state = { ...DEFAULTS, music: true, musicStation: "lofigirl", musicVolume: 0.45,
+  let state = { ...DEFAULTS, music: true, musicStation: "lautlofi", musicVolume: 0.45,
     schedule: true, onTime: "07:00", offTime: "23:00" };
 
   // URL overrides — handy for pinning a kiosk to one look: ?style=premium&palette=navy
@@ -274,7 +274,7 @@
     $("btnNextStation").onclick = nextStation;
 
     $("btnFull").onclick  = toggleFullscreen;
-    $("btnReset").onclick = () => { state = { ...DEFAULTS, music: true, musicStation: "lofigirl", musicVolume: 0.45,
+    $("btnReset").onclick = () => { state = { ...DEFAULTS, music: true, musicStation: "lautlofi", musicVolume: 0.45,
       schedule: true, onTime: "07:00", offTime: "23:00" }; bgPinned = false; commit(); rotationTick(true); refreshMotion(); flash("Reset to defaults"); };
     $("panelClose").onclick = closePanel;
     $("panelScrim").onclick = closePanel;
@@ -769,7 +769,7 @@
   const audio = $("bgAudio");
   const STALL_MS = 15000, WATCH_MS = 5000, SETTLE_MS = 10000, KEEPALIVE_MS = 5 * 60000, PROBE_MS = 60000;
   let manualPaused = false, wantMusic = false, needsGesture = false;
-  // The fallback chain: same flavour as Lofi Girl, each on different
+  // The fallback chain: same flavour as the default, each on different
   // infrastructure, all EU-hosted Icecast MP3 (see shared.js). Walked in order;
   // the intended station is skipped if it is itself in the chain.
   const BACKUP_CHAIN = ["fluxchillhop", "ilovechillhop", "reyfmlofi"];

@@ -22,19 +22,18 @@
     { id: "teal",     name: "Teal",          color: "#2ee6a6" },
     { id: "purple",   name: "Purple",        color: "#b15cff" },
   ];
-  // Audio-only stations. The first is the self-hosted Lofi Girl relay (see
-  // radio-relay/); the rest are SomaFM (commercial-free, listener-supported)
-  // plus two listener-supported classical stations with explicit stream URLs.
+  // Audio-only stations. The first (the default) is laut.fm /lofi: a 24/7
+  // lo-fi hip-hop channel on laut.fm, a long-running free German radio
+  // platform. HTTPS Icecast MP3, no token, sends CORS headers (the probe needs
+  // them). Unknown/retired ids (e.g. the old "lofigirl" relay) fall back here.
   const STATIONS = [
-    { id: "lofigirl",      name: "Lofi Girl",              genre: "Lo-fi hip-hop · live",
-      urls: ["https://esm-lofi-relay.onrender.com/lofi.mp3"],
-      // Pinged by the TV every few minutes while playing: a free Render service
-      // idles on "no inbound requests", and an open stream does not count.
-      keepalive: "https://esm-lofi-relay.onrender.com/healthz" },
+    { id: "lautlofi",      name: "laut.fm Lofi",           genre: "Lo-fi hip-hop · 24/7 (Germany)",
+      urls: ["https://lofi.stream.laut.fm/lofi",
+             "https://stream.laut.fm/lofi"] },
     // Lo-fi hip-hop stations that are actually reachable from a TV browser:
     // HTTPS Icecast MP3, no tokens, real operators, EU-hosted where possible.
     // Each was live-tested for a sustained audio/mpeg stream (Sept 2026). The
-    // first three are also the fallback chain in app.js when the relay is down.
+    // first three are also the fallback chain in app.js when the default drops.
     { id: "fluxchillhop",  name: "FluxFM Chillhop",        genre: "Chillhop · lo-fi hip-hop (Berlin)",
       urls: ["https://streams.fluxfm.de/Chillhop/mp3-128/streams.fluxfm.de/",
              "https://streams.fluxfm.de/Chillhop/mp3-320/streams.fluxfm.de/"] },
@@ -124,7 +123,7 @@
     style: "premium", palette: "orange",
     bg: "10-purple", bgRotate: "daily", bgSet: [], bgMotion: "gentle",
     logo: true, rocket: true, clock: true, particles: true, weather: true, speed: 1,   // clock back on every TV
-    music: false, musicStation: "lofigirl", musicVolume: 0.35,
+    music: false, musicStation: "lautlofi", musicVolume: 0.35,
     schedule: true, onTime: "07:00", offTime: "23:00", nightClock: true,
   };
 

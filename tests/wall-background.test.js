@@ -254,7 +254,7 @@ test("content security policy names every host the page talks to, and nothing in
   assert.match(html, /<meta name="referrer" content="no-referrer"/);
   assert.doesNotMatch(html, /<script(?![^>]*\bsrc=)/, "inline <script> would be blocked by script-src 'self'");
   assert.doesNotMatch(html, /\sstyle="/, "inline style attributes would be blocked by style-src");
-  // every audio host is allowed as media and as a connect target (the relay probe fetches it)
+  // every audio host is allowed as media and as a connect target (the fallback probe fetches it)
   require("../shared.js");
   const allowed = (list, host) => list.some((src) => src === "https://" + host ||
     (src.startsWith("https://*.") && host.endsWith(src.slice("https://*".length))));
@@ -281,11 +281,12 @@ test("content security policy names every host the page talks to, and nothing in
   assert.doesNotMatch(html, /<audio\b[^>]*crossorigin/);
 });
 
-test("clock is on by default, and the ping-only workflow holds no token permissions", () => {
+test("clock is on by default, and the retired Lofi Girl relay is gone", () => {
   require("../shared.js");
   assert.equal(globalThis.ESM.CONFIG_DEFAULTS.clock, true);
-  const wf = fs.readFileSync(path.join(__dirname, "..", ".github/workflows/relay-keepalive.yml"), "utf8");
-  assert.match(wf, /^permissions: \{\}/m);
+  assert.equal(globalThis.ESM.CONFIG_DEFAULTS.musicStation, "lautlofi");
+  assert.equal(globalThis.ESM.findStation("lofigirl").id, "lautlofi", "a saved old id falls back to the default");
+  assert.ok(!globalThis.ESM.STATIONS.some((s) => /onrender\.com/.test(JSON.stringify(s))));
 });
 
 test("the published page names no office address and signposts nothing to the controller", () => {
