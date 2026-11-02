@@ -766,9 +766,9 @@
   function configForExport() { return ESM.pickConfig(state); }
 
   /* ---------- Music ----------
-     The stream is a live relay on a free Render plan, so it *will* drop: Render
-     spins the service down, a track fails to resolve, the office network blinks.
-     Everything here is built around that:
+     The stream is a live third-party Icecast stream, so it *will* drop now
+     and then: the host restarts, the office network blinks. Everything here is
+     built around that:
 
      - Autoplay is attempted on load. Most TVs allow it and the music simply
        starts. The Philips refuses any sound before a user gesture, so there the
@@ -779,15 +779,13 @@
      - Every third failure moves one step along a fallback chain of lo-fi
        stations on unrelated infrastructure, so the room is never silent and a
        second dead host costs seconds, not minutes. While off the intended
-       station it is probed (the probe itself wakes a sleeping Render); when it
-       answers with audio again it comes back by itself.
-     - While the relay plays, a small ping every five minutes gives Render fresh
-       inbound traffic, because an open stream alone does not stop its idle timer.
+       station it is probed; when it answers with audio again it comes back by
+       itself.
 
      `wantMusic` is the intent ("sound should be on"); it survives the night pause,
      so the stream returns by itself in the morning. */
   const audio = $("bgAudio");
-  const STALL_MS = 15000, WATCH_MS = 5000, SETTLE_MS = 10000, KEEPALIVE_MS = 5 * 60000, PROBE_MS = 60000;
+  const STALL_MS = 15000, WATCH_MS = 5000, SETTLE_MS = 10000, PROBE_MS = 60000;
   let manualPaused = false, wantMusic = false, needsGesture = false;
   // The fallback chain: same flavour as the default, each on different
   // infrastructure, all EU-hosted Icecast MP3 (see shared.js). Walked in order;
@@ -795,7 +793,7 @@
   const BACKUP_CHAIN = ["fluxchillhop", "ilovechillhop", "reyfmlofi"];
   let streamUrls = [], streamIdx = 0, altIdx = 0, fails = 0, reconnectTimer = null;
   let lastTime = -1, lastProgressAt = 0, progressSince = 0;
-  let probeBusy = false, probeEvery = PROBE_MS, nextProbeAt = 0, lastKeepalive = 0;
+  let probeBusy = false, probeEvery = PROBE_MS, nextProbeAt = 0;
 
   const station = () => ESM.findStation(state.musicStation);
   // Intended station first, then the chain: altIdx walks this list.
@@ -824,7 +822,7 @@
   }
 
   // Reconnect with backoff. Each station gets three strikes (0 s, 3 s, 6 s
-  // apart) before the chain moves on, so a dead relay is on FluxFM in ~10 s and
+  // apart) before the chain moves on, so a dead default is on FluxFM in ~10 s and
   // a dead FluxFM on I Love Chillhop ~10 s later. The waits double on every
   // full lap of the chain, so a dead network is not hammered forever.
   function reconnect() {
@@ -851,25 +849,16 @@
       lastTime = t; lastProgressAt = now;
       if (!progressSince) progressSince = now;
       if (now - progressSince >= SETTLE_MS) fails = 0;               // settled: backoff starts over next time
-      if (onBackup()) { if (now >= nextProbeAt) probeIntended(); }
-      else if (now - lastKeepalive >= KEEPALIVE_MS) keepalive();
+      if (onBackup() && now >= nextProbeAt) probeIntended();
       return;
     }
     if (audio.error || audio.paused || now - lastProgressAt >= STALL_MS) reconnect();
   }
 
-  // A fresh inbound request every few minutes. Render's idle timer counts
-  // requests, not open streams, so the TV keeps the relay awake by itself.
-  function keepalive() {
-    lastKeepalive = Date.now();
-    const url = station().keepalive; if (!url) return;
-    try { fetch(url + "?t=" + Date.now(), { mode: "no-cors", cache: "no-store", credentials: "omit" }).catch(() => {}); } catch {}
-  }
-
-  // Off the intended station: does it answer with audio again? Only a
-  // real relay says `200 audio/*`; Render's own "waking up" page does not. The
-  // request wakes a sleeping service, so the timeout covers a cold start. One in
-  // flight at a time; the interval doubles (to five minutes) while it says no.
+  // Off the intended station: does it answer with audio again? Only a live
+  // stream says `200 audio/*`; an error or holding page does not. The timeout
+  // covers a slow host. One in flight at a time; the interval doubles (to five
+  // minutes) while it says no.
   function probeIntended() {
     if (probeBusy) return;
     probeBusy = true; nextProbeAt = Date.now() + probeEvery;

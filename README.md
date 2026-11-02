@@ -61,10 +61,9 @@ Defence in depth added by the audit:
   weather forecast no longer goes through `innerHTML`.
 - The audio element no longer requests CORS mode, so a station that omits
   `Access-Control-Allow-Origin` still plays.
-- The keepalive workflow runs with `permissions: {}`; the two deploy workflows
-  already held the minimum.
-- The relay's `/diag` probe (which ran yt-dlp against a caller-supplied URL from
-  Render's network) is now disabled unless `DIAG_TOKEN` is set and supplied.
+- The deploy workflows hold the minimum permissions.
+- The self-hosted Lofi Girl relay (`radio-relay/`, with its token-gated yt-dlp
+  `/diag` probe) was retired and deleted in November 2026.
 
 Residual, accepted: Google Fonts CSS is a third-party stylesheet (style-only,
 cannot execute script under the CSP); GitHub Actions are pinned to major tags,
@@ -106,8 +105,8 @@ backoff, forever. Every third failure moves one step along a fallback chain of l
 unrelated infrastructure — FluxFM Chillhop (Berlin), I Love Chillhop, REYFM #lofi — so the room is never
 silent; while off the intended station it is probed and playback returns by itself when it answers with
 audio again. The station picker also carries NTS Low Key, 0nlineradio LO-FI and Epic Lounge Jazzhop; every
-entry is a live-tested HTTPS Icecast MP3 stream. (The self-hosted Lofi Girl relay in `radio-relay/` is
-retired: its Render service is stopped and it is no longer a station.)
+entry is a live-tested HTTPS Icecast MP3 stream. (The self-hosted Lofi Girl relay was
+retired in November 2026: its Render service is stopped and its code deleted.)
 Silent for the whole of the overnight window. The existing configured office Google Cast group remains a
 separate, parallel output; the feed's `browserAudio: false` describes that Cast set-up, not this page.
 

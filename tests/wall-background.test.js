@@ -292,8 +292,7 @@ test("content security policy names every host the page talks to, and nothing in
   const allowed = (list, host) => list.some((src) => src === "https://" + host ||
     (src.startsWith("https://*.") && host.endsWith(src.slice("https://*".length))));
   for (const st of globalThis.ESM.STATIONS) {
-    const urls = globalThis.ESM.stationUrls(st).concat(st.keepalive ? [st.keepalive] : []);
-    for (const u of urls) {
+    for (const u of globalThis.ESM.stationUrls(st)) {
       const host = new URL(u).host;
       assert.ok(allowed(csp["media-src"], host), "media-src lacks " + host);
       assert.ok(allowed(csp["connect-src"], host), "connect-src lacks " + host);
@@ -319,7 +318,11 @@ test("clock is on by default, and the retired Lofi Girl relay is gone", () => {
   assert.equal(globalThis.ESM.CONFIG_DEFAULTS.clock, true);
   assert.equal(globalThis.ESM.CONFIG_DEFAULTS.musicStation, "lautlofi");
   assert.equal(globalThis.ESM.findStation("lofigirl").id, "lautlofi", "a saved old id falls back to the default");
-  assert.ok(!globalThis.ESM.STATIONS.some((s) => /onrender\.com/.test(JSON.stringify(s))));
+  assert.ok(!globalThis.ESM.STATIONS.some((s) => /onrender\.com/.test(JSON.stringify(s)) || s.keepalive));
+  const root = path.join(__dirname, "..");
+  assert.ok(!fs.existsSync(path.join(root, "radio-relay")), "the relay code is deleted");
+  assert.ok(!fs.existsSync(path.join(root, ".github/workflows/relay-keepalive.yml")));
+  assert.doesNotMatch(fs.readFileSync(path.join(root, "app.js"), "utf8"), /keepalive|onrender\.com\/lofi/i);
 });
 
 test("the published page names no office address and signposts nothing to the controller", () => {
