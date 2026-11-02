@@ -134,7 +134,7 @@ The intended scripts use Google Home's documented `time.schedule` starter and
 `cast-follower/` is included only as an optional foreground fallback while
 those prerequisites remain blocked. It has no remote configuration or
 credentials, targets an explicitly supplied group name, uses one allowlisted
-HTTPS Lofi Girl stream, steps aside for playback it did not start, and stops its
+HTTPS laut.fm Lofi stream, steps aside for playback it did not start, and stops its
 own playback at 23:00. It is not installed or auto-started. Persistent
 installation requires explicit authorization.
 
