@@ -645,28 +645,14 @@ html:not([data-nightclock="1"]) .night__clock { display: none; }
 }
 .btn:hover { background: rgba(255,255,255,.12); }
 .btn:disabled { opacity: .5; cursor: progress; }
-.btn--primary { background: var(--accent); border-color: transparent; color: #140a00; }
-.btn--primary:hover { background: var(--accent-2); }
 .btn--wide { width: 100%; flex: none; }
 .btn--gap { margin-top: 10px; }
 .btn-row { display: flex; gap: 10px; margin-top: 10px; }
-.field--token { margin-top: 12px; margin-bottom: 0; }
-.push-status { margin-top: 10px; font-size: 13px; line-height: 1.4; min-height: 18px; color: rgba(255,255,255,.7); }
-.push-status[data-kind="ok"] { color: #7CF2B4; }
-.push-status[data-kind="error"] { color: #ff8a8a; }
-.push-status[data-kind="warn"] { color: #ffcf6e; }
-.push-status[data-kind="busy"] { color: rgba(255,255,255,.7); }
-.remote-link {
-  display: block; margin-top: 4px; padding: 10px 12px; border-radius: 9px;
-  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14);
-  color: #fff; font-family: "Space Grotesk", monospace; font-size: 13px; word-break: break-all; text-decoration: none;
-}
-.remote-link:hover { border-color: var(--accent); }
 .panel__hint { margin-top: 8px; font-size: 12px; color: rgba(255,255,255,.45); line-height: 1.45; }
 .panel__hint b { color: rgba(255,255,255,.7); font-weight: 600; }
 .panel__note { margin-top: 14px; font-size: 12px; color: rgba(255,255,255,.45); min-height: 16px; }
 
-/* Inside the remote's live preview: no first-run hint, and the badge reads as on the TV */
+/* ?preview (local development): no first-run hint */
 body.is-preview .hint { display: none; }
 
 /* =================================================================

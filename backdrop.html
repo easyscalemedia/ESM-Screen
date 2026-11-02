@@ -32,33 +32,13 @@
       start=52-space-andromeda      pin one image
       vignette=0          drop the soft dark edges
   -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'" />
+  <meta name="referrer" content="no-referrer" />
   <link rel="stylesheet" href="embed/esm-backdrop.css" />
-  <style>
-    html, body { height: 100%; margin: 0; background: #000; overflow: hidden; }
-  </style>
+  <link rel="stylesheet" href="backdrop.css" />
 </head>
 <body>
   <script src="embed/esm-backdrop.js"></script>
-  <script>
-    (function () {
-      var q = new URLSearchParams(location.search);
-      var has = function (k) { return q.get(k) != null; };
-      var opts = {
-        base: location.pathname.replace(/[^/]*$/, ""),   // this site, wherever it is served from
-        follow: has("follow") ? q.get("follow") !== "0" : false,
-        intervalMinutes: has("interval") ? Number(q.get("interval")) : 3,
-        motion: q.get("motion") || "gentle",
-        palette: q.get("palette") || "orange",
-        disc: q.get("disc") !== "0",
-        vignette: q.get("vignette") !== "0",
-      };
-      if (has("discsize")) opts.discSize = q.get("discsize");
-      if (has("wordmark")) opts.wordmark = q.get("wordmark");
-      if (has("categories")) opts.categories = q.get("categories").split(",");
-      if (has("start")) opts.start = q.get("start");
-      if (has("fade")) opts.fadeMs = Number(q.get("fade"));
-      window.esmBackdrop = ESMBackdrop.mount(opts);
-    })();
-  </script>
+  <script src="backdrop.js"></script>
 </body>
 </html>

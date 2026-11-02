@@ -147,6 +147,39 @@ test("client rejects oversized bodies and malformed JSON", async () => {
   await assert.rejects(multibyte.refresh(), /too large/);
 });
 
+test("client holds the last good feed through failures, then lets it go stale", async () => {
+  const t0 = Date.parse("2026-09-03T10:04:00Z");   // after activatedAt
+  const replies = [
+    () => response(JSON.stringify(projection()), { headers: { etag: '"one"' } }),
+    () => { throw new TypeError("Failed to fetch"); },
+    () => response("", { status: 503, ok: false }),
+    () => response("", { status: 304, ok: false }),
+    () => { throw new TypeError("Failed to fetch"); },
+  ];
+  const client = new wall.Client(async () => replies.shift()());
+  assert.equal(client.held(t0), null, "nothing held before a first good answer");
+  assert.equal((await client.refresh(t0)).revision, 3);
+  await assert.rejects(client.refresh(t0 + 30000), /Failed to fetch/);
+  assert.equal(client.held(t0 + 30000).revision, 3, "one failed poll keeps the feed");
+  await assert.rejects(client.refresh(t0 + 60000), /503/);
+  assert.equal(client.held(t0 + wall.STALE_MS).revision, 3, "held up to STALE_MS");
+  assert.equal(client.held(t0 + wall.STALE_MS + 1), null, "then it goes stale");
+  // a 304 counts as a fresh good answer
+  assert.equal((await client.refresh(t0 + wall.STALE_MS - 1000)).revision, 3);
+  await assert.rejects(client.refresh(t0 + wall.STALE_MS + 1000));
+  assert.ok(client.held(t0 + wall.STALE_MS + 1000), "the 304 restarted the clock");
+  client.clear();
+  assert.equal(client.held(t0), null);
+});
+
+test("app keeps the feed on transient errors and image failures instead of dropping it", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+  const refresh = app.slice(app.indexOf("async function refreshWallFeed"), app.indexOf("/* ---------- Weather"));
+  assert.match(refresh, /catch \(_\) \{[^}]*if \(!wallClient\.held\(Date\.now\(\)\)\) useBundledFallback\(\)/);
+  assert.match(app, /probe\.onerror = \(\) => \{ if \(wallFeed && displayedSrc === src\) holdFeedImages\(\); \}/);
+  assert.doesNotMatch(app, /probe\.onerror = [^\n]*useBundledFallback/);
+});
+
 test("Dutch public holidays are exact for 2026 and 2027", () => {
   assert.deepEqual(wall.dutchPublicHolidays(2026), [
     "2026-01-01", "2026-04-03", "2026-04-05", "2026-04-06", "2026-04-27",
@@ -254,13 +287,12 @@ test("content security policy names every host the page talks to, and nothing in
   assert.match(html, /<meta name="referrer" content="no-referrer"/);
   assert.doesNotMatch(html, /<script(?![^>]*\bsrc=)/, "inline <script> would be blocked by script-src 'self'");
   assert.doesNotMatch(html, /\sstyle="/, "inline style attributes would be blocked by style-src");
-  // every audio host is allowed as media and as a connect target (the relay probe fetches it)
+  // every audio host is allowed as media and as a connect target (the fallback probe fetches it)
   require("../shared.js");
   const allowed = (list, host) => list.some((src) => src === "https://" + host ||
     (src.startsWith("https://*.") && host.endsWith(src.slice("https://*".length))));
   for (const st of globalThis.ESM.STATIONS) {
-    const urls = globalThis.ESM.stationUrls(st).concat(st.keepalive ? [st.keepalive] : []);
-    for (const u of urls) {
+    for (const u of globalThis.ESM.stationUrls(st)) {
       const host = new URL(u).host;
       assert.ok(allowed(csp["media-src"], host), "media-src lacks " + host);
       assert.ok(allowed(csp["connect-src"], host), "connect-src lacks " + host);
@@ -281,18 +313,69 @@ test("content security policy names every host the page talks to, and nothing in
   assert.doesNotMatch(html, /<audio\b[^>]*crossorigin/);
 });
 
-test("clock is on by default, and the ping-only workflow holds no token permissions", () => {
+test("workflows pin every action to a commit SHA and every pip package to a version", () => {
+  const dir = path.join(__dirname, "..", ".github/workflows");
+  for (const f of fs.readdirSync(dir)) {
+    const wf = fs.readFileSync(path.join(dir, f), "utf8");
+    for (const m of wf.matchAll(/uses:\s*(\S+)/g)) assert.match(m[1], /@[0-9a-f]{40}$/, f + ": " + m[1]);
+    for (const m of wf.matchAll(/pip install ([^|\n]*)/g)) {
+      assert.match(m[1], /--only-binary=:all:/, f);
+      for (const pkg of m[1].split(/\s+/).filter((t) => t && !t.startsWith("-"))) assert.match(pkg, /==\d/, f + ": " + pkg);
+    }
+  }
+});
+
+test("the retired remote's preview channel and config export are gone", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+  assert.doesNotMatch(app, /addEventListener\("message"|postMessage|forceNight|configForExport/);
+  require("../shared.js");
+  for (const k of ["pickConfig", "sameConfig", "normalizeConfig", "compactPlaylist", "REPO", "SITE", "CONFIG_KEYS"])
+    assert.equal(globalThis.ESM[k], undefined, k);
+});
+
+test("the particle loop stops at night and with particles off", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+  assert.match(app, /function frame\(t\) \{\s*if \(!particlesWanted\(\)\) \{ rafId = null;[^}]*return; \}/);
+  assert.match(app, /cancelAnimationFrame\(rafId\)/);
+  const schedule = app.slice(app.indexOf("function applySchedule"), app.indexOf("/* ---------- Ambient particle canvas"));
+  assert.match(schedule, /syncParticles\(\)/);
+});
+
+test("backdrop.html runs under a strict CSP with no inline script or style", () => {
+  const root = path.join(__dirname, "..");
+  const html = fs.readFileSync(path.join(root, "backdrop.html"), "utf8");
+  const meta = html.match(/<meta http-equiv="Content-Security-Policy" content="([^"]+)"/);
+  assert.ok(meta, "CSP meta missing");
+  const csp = Object.fromEntries(meta[1].split(";").map((d) => d.trim()).filter(Boolean).map((d) => {
+    const [name, ...src] = d.split(/\s+/); return [name, src];
+  }));
+  assert.deepEqual(csp["default-src"], ["'none'"]);
+  assert.deepEqual(csp["script-src"], ["'self'"]);
+  assert.deepEqual(csp["connect-src"], ["'self'"]);
+  assert.deepEqual(csp["img-src"], ["'self'"]);
+  assert.doesNotMatch(meta[1], /unsafe-inline|unsafe-eval|\bhttp:/);
+  assert.doesNotMatch(html.replace(/<!--[\s\S]*?-->/g, ""), /<script(?![^>]*\bsrc=)|<style|\sstyle="/);
+  const wf = fs.readFileSync(path.join(root, ".github/workflows/deploy-pages.yml"), "utf8");
+  assert.match(wf, /cp [^\n]*backdrop\.html backdrop\.js backdrop\.css _site\//);
+});
+
+test("clock is on by default, and the retired Lofi Girl relay is gone", () => {
   require("../shared.js");
   assert.equal(globalThis.ESM.CONFIG_DEFAULTS.clock, true);
-  const wf = fs.readFileSync(path.join(__dirname, "..", ".github/workflows/relay-keepalive.yml"), "utf8");
-  assert.match(wf, /^permissions: \{\}/m);
+  assert.equal(globalThis.ESM.CONFIG_DEFAULTS.musicStation, "lautlofi");
+  assert.equal(globalThis.ESM.findStation("lofigirl").id, "lautlofi", "a saved old id falls back to the default");
+  assert.ok(!globalThis.ESM.STATIONS.some((s) => /onrender\.com/.test(JSON.stringify(s)) || s.keepalive));
+  const root = path.join(__dirname, "..");
+  assert.ok(!fs.existsSync(path.join(root, "radio-relay")), "the relay code is deleted");
+  assert.ok(!fs.existsSync(path.join(root, ".github/workflows/relay-keepalive.yml")));
+  assert.doesNotMatch(fs.readFileSync(path.join(root, "app.js"), "utf8"), /keepalive|onrender\.com\/lofi/i);
 });
 
 test("the published page names no office address and signposts nothing to the controller", () => {
   const root = path.join(__dirname, "..");
   const host = new URL(wall.ORIGIN).host;
   // Everything the deploy workflow copies to the live site.
-  const published = ["index.html", "remote.html", "backdrop.html", "app.js", "shared.js",
+  const published = ["index.html", "remote.html", "backdrop.html", "backdrop.js", "backdrop.css", "app.js", "shared.js",
                      "wall-background.js", "styles.css", "assets/README.md", "embed/README.md",
                      "embed/esm-backdrop.js", "embed/demo.html"];
   for (const f of published) {

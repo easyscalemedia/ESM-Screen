@@ -1,10 +1,11 @@
 [
  {
-  "id": "lofigirl",
-  "name": "Lofi Girl",
-  "genre": "Lo-fi hip-hop · live",
+  "id": "lautlofi",
+  "name": "laut.fm Lofi",
+  "genre": "Lo-fi hip-hop · 24/7 (Germany)",
   "urls": [
-   "https://esm-lofi-relay.onrender.com/lofi.mp3"
+   "https://lofi.stream.laut.fm/lofi",
+   "https://stream.laut.fm/lofi"
   ]
  },
  {

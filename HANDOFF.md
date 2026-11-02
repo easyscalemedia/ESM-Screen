@@ -40,12 +40,10 @@ attribute). The Philips refuses sound before a gesture, so there the badge shows
 fires the light wave, with no settings sidebar, so a TV automation can trigger
 it by clicking screen centre. A watchdog reconnects a stalled or dead stream
 with backoff, walks a fallback chain (FluxFM Chillhop → I Love Chillhop → REYFM
-#lofi, three strikes each) when the relay is down, probes the relay while off it
-and returns when it answers; the page pings the relay's
-`/healthz` every five minutes while playing so Render never idles it. The
-keepalive cron and the relay's self-ping cover Mon-Sat 05:00-21:59 UTC to match
-the 07:00-23:00 Amsterdam screen window. The Google Cast group remains a
-separate output.
+#lofi, three strikes each) when the default laut.fm Lofi stream is down, probes
+it while off it and returns when it answers. The self-hosted Lofi Girl relay
+(Render) was retired in November 2026 and its code deleted. The Google Cast
+group remains a separate output.
 
 ## Security audit (September 2026)
 The page's only contact with Scale OS is a credential-free GET of one fixed
@@ -53,11 +51,10 @@ feed URL and its image route (`redirect: "error"`, no referrer), validated into
 a strict 32 KiB envelope; there is no write path and nothing to steal. Added: a
 CSP `<meta>` (`default-src 'none'`, `script-src 'self'`, per-host allowlists for
 connect/img/media, contract-tested against the station list), no-referrer,
-same-origin-only preview messaging, DOM-built weather forecast, audio without
-CORS mode, `permissions: {}` on the keepalive workflow, and the relay's `/diag`
-gated behind `DIAG_TOKEN` (needs a Render redeploy; unset = disabled). The clock
-is on by default again (`CONFIG_DEFAULTS.clock`). Residual: Google Fonts CSS,
-Actions pinned to tags not SHAs.
+no postMessage input (the remote-preview channel is gone), DOM-built weather forecast, audio without
+CORS mode. (The relay with its `/diag` probe has since been deleted.) The clock
+is on by default again (`CONFIG_DEFAULTS.clock`). Residual: Google Fonts CSS.
+Actions are pinned to commit SHAs and the deploy's pip packages to exact versions.
 
 ## Preserved motion work
 
@@ -79,7 +76,7 @@ speaker/group appears.
 An attended Google Home mobile session must set the Home address to the office
 address (not recorded in this repository), link a
 compatible Assistant speaker into that Home, then validate—not merely save—the
-07:00 “Play Lofi Girl on Speqckers centrake r” and 23:00 “Stop music on
+07:00 “Play lo-fi radio on Speqckers centrake r” and 23:00 “Stop music on
 Speqckers centrake r” scripts. Do not report these as working before that test.
 
 An optional foreground-only LAN follower is isolated under `cast-follower/`.
@@ -102,10 +99,10 @@ disconnect the feed and confirm both select the same bundled fallback on the nex
 background visibly drifts. Check active behavior on a normal weekday and Saturday, inactivity on
 Sunday, an official Dutch public holiday, and a holiday supplied by Wall Controls,
 then check just before/after 07:00 and 23:00
-Europe/Amsterdam under both CET and CEST. Finally, verify a non-Philips TV starts Lofi
-Girl on load, that on the Philips one click on the logo starts it without opening the
-settings sidebar, that pulling the relay switches the badge to "FluxFM Chillhop ·
-Lofi Girl unreachable" and back once it returns, and that the existing configured office Cast
+Europe/Amsterdam under both CET and CEST. Finally, verify a non-Philips TV starts the
+music on load, that on the Philips one click on the logo starts it without opening the
+settings sidebar, that blocking laut.fm switches the badge to "FluxFM Chillhop ·
+laut.fm Lofi unreachable" and back once it returns, and that the existing configured office Cast
 speaker group still plays independently.
 The optional `cast-follower/` is not part of this check: do not install or
 auto-start it.

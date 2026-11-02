@@ -1,0 +1,2 @@
+/* backdrop.html page frame: a separate file so the page can run under a strict CSP. */
+html, body { height: 100%; margin: 0; background: #000; overflow: hidden; }

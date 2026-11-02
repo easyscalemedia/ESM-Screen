@@ -56,19 +56,19 @@ Defence in depth added by the audit:
   list in `shared.js` and the CSP in agreement.
 - `<meta name="referrer" content="no-referrer">`; the feed fetch also refuses
   redirects.
-- The `?preview` message channel accepts and posts to `location.origin` only.
+- The page accepts no `postMessage` input at all: the old remote-preview channel
+  was removed with the remote. `?preview` is a local development mode only.
 - All dynamic HTML is built from static catalogue strings or DOM nodes; the
   weather forecast no longer goes through `innerHTML`.
 - The audio element no longer requests CORS mode, so a station that omits
   `Access-Control-Allow-Origin` still plays.
-- The keepalive workflow runs with `permissions: {}`; the two deploy workflows
-  already held the minimum.
-- The relay's `/diag` probe (which ran yt-dlp against a caller-supplied URL from
-  Render's network) is now disabled unless `DIAG_TOKEN` is set and supplied.
+- The deploy workflows hold the minimum permissions.
+- The self-hosted Lofi Girl relay (`radio-relay/`, with its token-gated yt-dlp
+  `/diag` probe) was retired and deleted in November 2026.
 
 Residual, accepted: Google Fonts CSS is a third-party stylesheet (style-only,
-cannot execute script under the CSP); GitHub Actions are pinned to major tags,
-not commit SHAs. The audio streams are third-party hosts named in the CSP.
+cannot execute script under the CSP); GitHub Actions are pinned to full commit SHAs
+and the deploy's Pillow/numpy to exact versions (wheels only); bump them deliberately. The audio streams are third-party hosts named in the CSP.
 
 ## Display behavior
 
@@ -94,21 +94,20 @@ are inactive. The calendar is calculated locally and `Intl.DateTimeFormat` in
 `Europe/Amsterdam` applies CET/CEST transitions. The screen also remains inactive
 on every valid holiday in the active Wall Controls feed;
 the feed supplements rather than replaces the local Sunday/Dutch-holiday rules.
-The TV page plays Lofi Girl at volume 0.45 through the TV's own browser. It tries to start by itself on
+The TV page plays laut.fm Lofi (24/7 lo-fi hip-hop, free) at volume 0.45 through the TV's own browser. It tries to start by itself on
 load; TVs that allow autoplay simply play. The Philips refuses sound before a user gesture, so there the
 corner badge shows ▶ until anything is clicked — clicking the logo starts the music and fires the light
 wave without opening the settings sidebar, so a TV automation only has to click the middle of the screen.
 The badge plays and pauses.
 
-The stream is a live relay on a free Render plan and is expected to drop. A watchdog checks that playback
+Live streams drop now and then. A watchdog checks that playback
 is actually advancing; a stall, error or self-pause is reconnected on a fresh connection with exponential
 backoff, forever. Every third failure moves one step along a fallback chain of lo-fi stations on
 unrelated infrastructure — FluxFM Chillhop (Berlin), I Love Chillhop, REYFM #lofi — so the room is never
-silent and a second dead host costs seconds; while off the intended station the relay is probed (the probe
-also wakes a sleeping Render) and Lofi Girl returns by itself when the relay answers with audio again. The
-station picker also carries NTS Low Key, 0nlineradio LO-FI and Epic Lounge Jazzhop; every entry is a
-live-tested HTTPS Icecast MP3 stream. While the
-relay plays, the page pings its `/healthz` every five minutes so Render's idle timer never fires.
+silent; while off the intended station it is probed and playback returns by itself when it answers with
+audio again. The station picker also carries NTS Low Key, 0nlineradio LO-FI and Epic Lounge Jazzhop; every
+entry is a live-tested HTTPS Icecast MP3 stream. (The self-hosted Lofi Girl relay was
+retired in November 2026: its Render service is stopped and its code deleted.)
 Silent for the whole of the overnight window. The existing configured office Google Cast group remains a
 separate, parallel output; the feed's `browserAudio: false` describes that Cast set-up, not this page.
 
@@ -124,7 +123,7 @@ One attended Google Home mobile setup session is required:
 1. Set the Home address to the office address (not recorded in this repository).
 2. Link a compatible Assistant speaker into that Home and ensure the group
    `Speqckers centrake r` is available.
-3. Validate a 07:00 script: **Play Lofi Girl on Speqckers centrake r**.
+3. Validate a 07:00 script: **Play lo-fi radio on Speqckers centrake r**.
 4. Validate a 23:00 script: **Stop music on Speqckers centrake r**.
 
 The intended scripts use Google Home's documented `time.schedule` starter and
@@ -135,7 +134,7 @@ The intended scripts use Google Home's documented `time.schedule` starter and
 `cast-follower/` is included only as an optional foreground fallback while
 those prerequisites remain blocked. It has no remote configuration or
 credentials, targets an explicitly supplied group name, uses one allowlisted
-HTTPS Lofi Girl stream, steps aside for playback it did not start, and stops its
+HTTPS laut.fm Lofi stream, steps aside for playback it did not start, and stops its
 own playback at 23:00. It is not installed or auto-started. Persistent
 installation requires explicit authorization.
 
@@ -188,9 +187,9 @@ both images on the same 180-second boundary, then disconnect the feed and confir
 the synchronized bundled fallback. Verify active behavior on a normal weekday and
 Saturday, inactivity on Sunday, a Dutch public holiday, and a Wall Controls holiday
 from the active feed, plus both 07:00/23:00
-boundaries under CET and CEST. Confirm that a non-Philips TV starts Lofi Girl on load, that on the
-Philips one click on the logo starts it without revealing the settings sidebar, that pulling the relay
-switches the badge to "FluxFM Chillhop · Lofi Girl unreachable" and back when the relay returns, and that the
+boundaries under CET and CEST. Confirm that a non-Philips TV starts the music on load, that on the
+Philips one click on the logo starts it without revealing the settings sidebar, that blocking laut.fm
+switches the badge to "FluxFM Chillhop · laut.fm Lofi unreachable" and back when it returns, and that the
 existing configured office Cast group still plays independently. The optional
 `cast-follower/` remains uninstalled and is not auto-started.
 
