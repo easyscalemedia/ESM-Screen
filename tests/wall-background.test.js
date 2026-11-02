@@ -318,9 +318,14 @@ test("workflows pin every action to a commit SHA and every pip package to a vers
   for (const f of fs.readdirSync(dir)) {
     const wf = fs.readFileSync(path.join(dir, f), "utf8");
     for (const m of wf.matchAll(/uses:\s*(\S+)/g)) assert.match(m[1], /@[0-9a-f]{40}$/, f + ": " + m[1]);
-    for (const m of wf.matchAll(/pip install ([^|\n]*)/g)) {
+    for (const m of wf.matchAll(/pip install ([^|\n\\]*)/g)) {
       assert.match(m[1], /--only-binary=:all:/, f);
       for (const pkg of m[1].split(/\s+/).filter((t) => t && !t.startsWith("-"))) assert.match(pkg, /==\d/, f + ": " + pkg);
+    }
+    // A plain (unquoted, non-block) YAML scalar may not contain ": ": GitHub
+    // then rejects the whole workflow before any job runs (it broke a deploy once).
+    for (const m of wf.matchAll(/^[ \t]*(?:-[ \t]+)?[\w-]+:[ \t]+([^|>'"\s#][^\n]*)$/gm)) {
+      assert.doesNotMatch(m[1].replace(/\s#.*$/, ""), /:\s/, f + ": unquoted ': ' in " + m[1]);
     }
   }
 });
