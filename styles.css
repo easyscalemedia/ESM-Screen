@@ -290,6 +290,11 @@ html[data-style="minimal"] .scene__vignette {
      box-shadow on the tube instead, painted once. */
 }
 .disc:focus-visible { outline: 0.4vmin solid var(--accent); outline-offset: 1vmin; border-radius: 50%; }
+.disc__christmas {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: contain; opacity: .82;
+  animation: discFloat 14s ease-in-out infinite;
+}
 .disc__tube {
   position: absolute; inset: 0; border-radius: 50%; overflow: hidden;
   animation: discFloat 14s ease-in-out infinite;
@@ -484,6 +489,7 @@ html[data-style="minimal"] .scene__vignette {
 .screen.is-night .rocket__bob,
 .screen.is-night .disc,
 .screen.is-night .disc__tube,
+.screen.is-night .disc__christmas,
 .screen.is-night .scene__beams,
 .screen.is-night .scene__grid { animation-play-state: paused; }
 .night__clock {
@@ -659,7 +665,7 @@ body.is-preview .hint { display: none; }
    ACCESSIBILITY: honour reduced-motion (e.g. a kiosk set this way)
    ================================================================= */
 @media (prefers-reduced-motion: reduce) {
-  .screen, .scene__image, .blob, .rocket, .rocket__bob, .disc, .disc__tube,
+  .screen, .scene__image, .blob, .rocket, .rocket__bob, .disc, .disc__tube, .disc__christmas,
   .scene__beams, .scene__grid, .brand, .clock, .night__clock {
     animation-duration: .001s !important; animation-iteration-count: 1 !important;
   }

@@ -109,6 +109,7 @@
     { id: "nature",   name: "Landscapes",        blurb: "Real photography — Unsplash licence" },
     { id: "abstract", name: "Abstract",          blurb: "Liquid light, gold, waves — Unsplash licence" },
     { id: "art",      name: "Illustrated",       blurb: "Generated in-house (flat, stylised)" },
+    { id: "christmas", name: "Christmas",       blurb: "Seasonal photography" },
   ];
   // Local visual defaults used only in memory.
   const CONFIG_DEFAULTS = {
@@ -149,13 +150,15 @@
     let rest = m ? m[2] : token;
     let cat = "abstract";
     const cm = rest.match(/^(space|earth|nature|abstract|art)-(.+)$/);
-    if (cm) { cat = cm[1]; rest = cm[2]; }
+    if (String(src).startsWith("assets/christmas/photos/")) cat = "christmas";
+    else if (cm) { cat = cm[1]; rest = cm[2]; }
     else if (num >= 13 && num <= 38) cat = "art";
     const name = rest.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
     return { token, num, cat, name };
   }
   function thumbFor(src) {
-    return String(src).replace(/^assets\/slides\//, "assets/thumbs/").replace(/\.\w+$/, ".jpg");
+    return String(src).replace(/^assets\/slides\//, "assets/thumbs/")
+      .replace(/^assets\/christmas\/photos\//, "assets/christmas/thumbs/").replace(/\.\w+$/, ".jpg");
   }
   // The playlist: `bgSet` lists the tokens allowed in the rotation. Empty or
   // missing = everything. A set that matches nothing falls back to everything

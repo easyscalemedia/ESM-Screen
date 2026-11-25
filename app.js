@@ -2,7 +2,7 @@
    Easy Scale Media — Ambient Screen controller
    - Theme/palette switching, hidden control panel, live clock,
      auto on/off schedule, ambient particle canvas, persistence.
-   - Background authority comes only from the credential-free Scale OS feed.
+   - Classic follows the credential-free Scale OS feed. Christmas is opt-in per URL.
    - No dependencies, no build, cookies, credentials, or persistent settings.
    - `?preview` is a local development preview: no polling, audio, or storage.
    ================================================================= */
@@ -12,6 +12,7 @@
   const { STYLES, PALETTES, STATIONS, ROTATIONS, CATEGORIES } = ESM;
   const QS = new URLSearchParams(location.search);
   const PREVIEW = QS.has("preview");
+  const CHRISTMAS = QS.get("mode") === "christmas";
 
   /* ---------- Defaults / state ---------- */
   const DEFAULTS = {
@@ -237,6 +238,13 @@
       pr.appendChild(b);
     });
 
+    $("tgChristmas").checked = CHRISTMAS;
+    $("tgChristmas").onchange = (e) => {
+      const url = new URL(location.href);
+      if (e.target.checked) url.searchParams.set("mode", "christmas");
+      else url.searchParams.delete("mode");
+      location.assign(url.href);
+    };
     $("tgLogo").onchange    = (e) => { state.logo = e.target.checked; commit(); };
     $("tgRocket").onchange  = (e) => { state.rocket = e.target.checked; commit(); };
     $("tgClock").onchange   = (e) => { state.clock = e.target.checked; commit(); };
@@ -486,6 +494,8 @@
   ];
   let slides = [], bundledSlides = [], slideIdx = 0, slideFront = 0, slidesActive = false, displayedSrc = null;
   let lastSlot = null, bgPinned = false, rotTimer = null, motionMap = null;
+  let christmasActive = false;
+  const CHRISTMAS_SLOT_MS = ESMWallBackground.SLOT_MS;
   let wallFeed = null;
   const wallClient = new ESMWallBackground.Client();
   // A feed image that fails to load (a sleeping Render host, a blip) sets this:
@@ -567,6 +577,16 @@
   function rotationTick(force) {
     if (!slidesActive || bgPinned) return;
     const now = Date.now();
+    if (christmasActive) {
+      const slot = Math.floor(now / CHRISTMAS_SLOT_MS);
+      clearTimeout(rotTimer);
+      rotTimer = setTimeout(rotationTick, (slot + 1) * CHRISTMAS_SLOT_MS - now + 50);
+      if (slot !== lastSlot) {
+        lastSlot = slot;
+        showSlide(slot % slides.length);
+      }
+      return;
+    }
     const activeFeed = now >= feedHoldUntil ? wallClient.current(now) : null;
     if (activeFeed !== wallFeed) {                      // feed adopted, replaced, or set aside
       wallFeed = activeFeed;
@@ -647,6 +667,11 @@
       b.classList.toggle("is-active", Number(b.dataset.i) === slideIdx));
     const now = $("bgNow"); if (!now || !slides.length) return;
     const info = ESM.slideInfo(slides[slideIdx] || "");
+    if (christmasActive && !bgPinned) {
+      const minutes = Math.ceil((CHRISTMAS_SLOT_MS - Date.now() % CHRISTMAS_SLOT_MS) / 60000);
+      now.textContent = `Now: ${info.name} · next change in ${minutes} min · ${slides.length} in rotation`;
+      return;
+    }
     const list = activeSlides();
     const pick = ESM.rotationPick(list.length, state.bgRotate);
     let when = "pinned — choose a rotation above to resume";
@@ -657,16 +682,32 @@
     }
     now.textContent = `Now: ${info.name} · ${when}`;
   }
-  async function initSlides() {
+  async function loadSlides(path) {
     let list = [];
     for (let attempt = 0; attempt < 3 && !list.length; attempt++) {
       try {
-        const r = await fetch(`assets/backgrounds.json?t=${Date.now()}`, { cache: "no-store" });
+        const r = await fetch(`${path}?t=${Date.now()}`, { cache: "no-store" });
         if (r.ok) { const d = await r.json(); list = Array.isArray(d) ? d : (d.images || []); }
       } catch {}
       if (!list.length && attempt < 2) await new Promise((res) => setTimeout(res, 1500));
     }
-    list = (list || []).filter(Boolean);
+    return (list || []).filter(Boolean);
+  }
+  async function initSlides() {
+    let list = CHRISTMAS ? await loadSlides("assets/christmas/backgrounds.json") : [];
+    christmasActive = list.length > 0;
+    if (christmasActive) {
+      const badge = $("christmasBadge");
+      badge.onload = () => {
+        badge.hidden = false;
+        $("disc").querySelector(".disc__tube").hidden = true;
+      };
+      badge.src = "assets/christmas/esm-christmas-badge.webp";
+      $("bgHint").textContent = "Christmas mode cycles through the seasonal photos every three minutes on this screen.";
+    } else {
+      list = await loadSlides("assets/backgrounds.json");
+      if (CHRISTMAS) $("bgHint").textContent = "Christmas photos are unavailable. The classic background is playing.";
+    }
     if (!list.length) list = FALLBACK_SLIDES;          // never get stuck on the bare gradient
     try {
       const r = await fetch(`assets/motion.json?t=${Date.now()}`, { cache: "no-store" });
@@ -679,7 +720,13 @@
     let start = 0;
     if (bgQ != null && /^\d+$/.test(bgQ)) { start = parseInt(bgQ, 10); bgPinned = true; }
     else if (bgQ != null) { const m = ESM.findSlide(slides, bgQ); if (m >= 0) { start = m; bgPinned = true; } }
-    else {
+    if (christmasActive && !bgPinned) {
+      rotationTick(true);
+      buildBgGrid();
+      if (!PREVIEW) refreshWallFeed();
+      return;
+    }
+    if (bgQ == null) {
       const list2 = activeSlides();
       const pick = ESM.rotationPick(list2.length, state.bgRotate);
       if (pick) { start = slides.indexOf(list2[pick.index]); lastSlot = pick.slot; rotTimer = setTimeout(() => rotationTick(), Math.max(1000, pick.nextChangeMs + 250)); }
@@ -699,6 +746,7 @@
   // Scale OS deselected the library (or its feed is gone for good): bundled slides.
   function useBundledFallback() {
     wallClient.clear();
+    if (christmasActive) return;  // the feed can expire without changing the seasonal playlist
     wallFeed = null; feedHoldUntil = 0;
     slides = bundledSlides.length ? bundledSlides.slice() : FALLBACK_SLIDES.slice();
     state.bgRotate = "5m";   // mirrors ESMWallBackground.BUNDLED_SLOT_MS for the panel's "next change" text
@@ -721,6 +769,7 @@
       return;
     }
     if (!feed) return;
+    if (christmasActive) return;  // keep the feed for the schedule only
     if (feed.source !== "selected-library") { useBundledFallback(); return; }
     bgPinned = false;
     rotationTick(true);
