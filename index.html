@@ -92,6 +92,7 @@
           <div class="disc__word"><b>Easy Scale</b><b>Media</b></div>
         </div>
       </div>
+      <img class="disc__christmas" id="christmasBadge" alt="" width="1024" height="1024" hidden>
     </div>
 
     <!-- Clock + music badge share a right-aligned stack inside the TV-safe
@@ -145,7 +146,7 @@
     <div class="panel__head">
       <div>
         <h1 class="panel__title">Screen settings</h1>
-        <p class="panel__sub">Local visual settings apply to this TV. The wall controller owns shared background and schedule intent.</p>
+      <p class="panel__sub">Local visual settings apply to this TV. The wall controller manages the classic background and schedule.</p>
       </div>
       <button class="panel__close" id="panelClose" aria-label="Close">&times;</button>
     </div>
@@ -159,6 +160,8 @@
     </nav>
 
     <section class="pane" data-pane="look">
+      <h2 class="panel__label">Seasonal mode</h2>
+      <label class="toggle"><input type="checkbox" id="tgChristmas"><span>Christmas mode</span></label>
       <h2 class="panel__label">Style</h2>
       <div class="opt-grid" id="styleGrid"></div>
       <h2 class="panel__label">Color</h2>
@@ -186,7 +189,7 @@
       <p class="bg-now" id="bgNow"></p>
       <button class="btn btn--ghost btn--wide" id="btnNextBg" disabled>Managed centrally</button>
       <div class="bg-gallery" id="bgGrid"></div>
-      <p class="panel__hint">The wall controller selects the shared background. Each image keeps the slow tailored motion from its profile; if the feed is unavailable, every TV uses the same bundled fallback clock.</p>
+      <p class="panel__hint" id="bgHint">The wall controller selects the shared background. Each image keeps the slow tailored motion from its profile; if the feed is unavailable, every TV uses the same bundled fallback clock.</p>
     </section>
 
     <section class="pane" data-pane="music" hidden>

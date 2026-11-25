@@ -72,7 +72,7 @@ and the deploy's Pillow/numpy to exact versions (wheels only); bump them deliber
 
 ## Display behavior
 
-A valid `selected-library` feed owns background selection. Every display stages
+In classic mode, a valid `selected-library` feed owns background selection. The display stages
 a revision until its UTC activation instant, then derives the same 180-second
 slot and image from that instant plus the revision offset. A previous revision
 stays active until the exact boundary. Local panel and URL background actions do
@@ -110,6 +110,18 @@ entry is a live-tested HTTPS Icecast MP3 stream. (The self-hosted Lofi Girl rela
 retired in November 2026: its Render service is stopped and its code deleted.)
 Silent for the whole of the overnight window. The existing configured office Google Cast group remains a
 separate, parallel output; the feed's `browserAudio: false` describes that Cast set-up, not this page.
+
+## Christmas mode
+
+Press **C**, then turn on **Look → Christmas mode**, or open [the Christmas
+display](https://easyscalemedia.github.io/ESM-Screen/?mode=christmas). This URL
+rotates all 50 seasonal photos in playlist order every three minutes and
+renders the orange Christmas badge as a single overlay at 82% opacity. Use
+the same URL on each TV to keep their photos in sync.
+
+Turn the switch off to return to the classic display. The original URL keeps
+following the wall controller, and both modes use the same schedule, clock,
+weather and music controls.
 
 ## Google Home status (not yet deliverable)
 
